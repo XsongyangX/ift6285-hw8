@@ -1,3 +1,4 @@
+import time
 from typing import List, Set
 from nltk.corpus import treebank
 from nltk.grammar import Nonterminal, PCFG, ProbabilisticProduction, induce_pcfg
@@ -5,6 +6,7 @@ from nltk.parse.viterbi import ViterbiParser
 import pickle
 
 from nltk.tree import Tree
+
 
 def induce_grammar(train):
     """Induces a PCFG from the given set of Penn Treebank sentences
@@ -17,14 +19,17 @@ def induce_grammar(train):
     """
     productions = []
     for item in train:
-      for tree in treebank.parsed_sents(item):
-        # perform optional tree transformations, e.g.:
-        tree.collapse_unary(collapsePOS = False)# Remove branches A-B-C into A-B+C
-        tree.chomsky_normal_form(horzMarkov = 2)# Remove A->(B,C,D) into A->B,C+D->D
-        productions += tree.productions()
+        for tree in treebank.parsed_sents(item):
+            # perform optional tree transformations, e.g.:
+            # Remove branches A-B-C into A-B+C
+            tree.collapse_unary(collapsePOS=False)
+            # Remove A->(B,C,D) into A->B,C+D->D
+            tree.chomsky_normal_form(horzMarkov=2)
+            productions += tree.productions()
 
     S = Nonterminal('S')
     return induce_pcfg(S, productions)
+
 
 def get_missing_words(grammar: PCFG, sentences: List[Tree]):
     """Get words that are not in the grammar but in the given sentences
@@ -40,11 +45,13 @@ def get_missing_words(grammar: PCFG, sentences: List[Tree]):
     missing_words = []
     for tree in treebank.parsed_sents(sentences):
         tokens = tree.leaves()
-        missing_words += [tok for tok in tokens if not grammar._lexical_index.get(tok)]
+        missing_words += [
+            tok for tok in tokens if not grammar._lexical_index.get(tok)]
 
     return set(missing_words)
 
-def fill_missing_words(grammar : PCFG, missing_words: Set[str]):
+
+def fill_missing_words(grammar: PCFG, missing_words: Set[str]):
     unknown = Nonterminal('UNK')
     rule = ProbabilisticProduction(unknown, list(missing_words), prob=1)
     adjusted_productions = grammar.productions()
@@ -52,15 +59,20 @@ def fill_missing_words(grammar : PCFG, missing_words: Set[str]):
     return PCFG(Nonterminal('S'), adjusted_productions)
 
 
-def parse_treebank(parser: PCFG, sentences):
+def parse_treebank(parser: ViterbiParser, sentences):
+    start_time = time.time()
+    parser.trace(trace=1)
     for sentence in treebank.parsed_sents(sentences):
         tokens = sentence.leaves()
         for tree in parser.parse(tokens):
             print(tree)
+            print(
+                f"Time elapsed for sentence of length {len(tokens)}: {time.time() - start_time}")
+
 
 def main():
     # train = treebank.fileids()[:190]
-    test = treebank.fileids()[190:] # 10 last sentences
+    test = treebank.fileids()[190:]  # 10 last sentences
 
     # original grammar
     # pcfg = induce_grammar(train)
@@ -76,11 +88,12 @@ def main():
     # pickle.dump(pcfg_unk, open("grammar_unk.pcfg", 'wb'))
 
     # load unk grammar
-    pcfg_unk : PCFG = pickle.load(open("grammar_unk.pcfg", 'rb'))
+    pcfg_unk: PCFG = pickle.load(open("grammar_unk.pcfg", 'rb'))
 
     # use unk grammar on test sentences
     parser = ViterbiParser(pcfg_unk)
     parse_treebank(parser, test)
+
 
 if __name__ == "__main__":
     main()
