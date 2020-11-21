@@ -4,8 +4,8 @@ from nltk.corpus import treebank
 import pickle
 import sys
 
-subset_begin = int(sys.argv[0])
-subset_end = int(sys.argv[1])
+subset_begin = int(sys.argv[1])
+subset_end = int(sys.argv[2])
 assert subset_end >= subset_begin
 
 # load unk grammar
