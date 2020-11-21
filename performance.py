@@ -35,7 +35,7 @@ def get_predictions():
 # evaluate
 correct = 0
 total = 0
-for predicted, truth in zip(get_predictions(), test_pos):
+for predicted, truth in zip(get_predictions(), test_pos[subset_begin: subset_end]):
     this_sentence_correct = 0
     this_sentence_total = 0
     
