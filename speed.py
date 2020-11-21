@@ -22,7 +22,11 @@ pcfg_unk = pickle.load(open("grammar_unk.pcfg", 'rb'))
 parser = ViterbiParser(pcfg_unk)
 
 # one sentence
-sentence = treebank.parsed_sents(treebank.fileids()[:190][0]).leaves()
+test = treebank.fileids()[190:]
+first_sentence = None
+for sentence in treebank.parsed_sents(test):
+    first_sentence = sentence.leaves()
+    break
 
 for i in range(1,7):
-    parse(parser, sentence[:i])
+    parse(parser, first_sentence[:i])
