@@ -1,7 +1,7 @@
 import time
 from typing import List, Set
 from nltk.corpus import treebank
-from nltk.grammar import Nonterminal, PCFG, ProbabilisticProduction, induce_pcfg
+from nltk.grammar import Nonterminal, PCFG, ProbabilisticProduction, Production, induce_pcfg
 from nltk.parse.viterbi import ViterbiParser
 import pickle
 
@@ -52,11 +52,39 @@ def get_missing_words(grammar: PCFG, sentences: List[Tree]):
 
 
 def fill_missing_words(grammar: PCFG, missing_words: Set[str]):
+    # UNK -> word1 | word2 | ... | wordN
     unknown = Nonterminal('UNK')
-    rule = ProbabilisticProduction(unknown, list(missing_words), prob=1)
-    adjusted_productions = grammar.productions()
-    adjusted_productions.append(rule)
-    return PCFG(Nonterminal('S'), adjusted_productions)
+    unk_rules = [ProbabilisticProduction(unknown, missing_word, prob=1.0/len(missing_words)) for missing_word in missing_words]
+    
+    # Add UNK as a possibility to all rules with strings in the right hand side
+    corrected_rules : List[Nonterminal] = []
+    rule: ProbabilisticProduction
+    for rule in grammar.productions():
+        
+        # right hand side has a string somewhere
+        if any(isinstance(element, str) for element in rule.rhs()):
+            
+            # rule has already been corrected
+            if rule.lhs() in corrected_rules:
+                continue
+            
+            rules_to_rebalance = grammar.productions(lhs=rule.lhs())
+
+            unk_rules.append(ProbabilisticProduction(\
+                rule.lhs(), [unknown], prob= 1.0 / (len(rules_to_rebalance) + 1)))
+            
+            # rebalance probabilities
+            rule_to_rebalance : ProbabilisticProduction
+            for rule_to_rebalance in rules_to_rebalance:
+                unk_rules.append(ProbabilisticProduction(\
+                    rule_to_rebalance.lhs(),
+                    rule_to_rebalance.rhs(),
+                    prob=rule_to_rebalance.prob() / (len(rules_to_rebalance) + 1)
+                    ))
+
+            corrected_rules.append(rule.lhs())
+
+    return PCFG(Nonterminal('S'), unk_rules)
 
 
 def parse_treebank(parser: ViterbiParser, sentences):
