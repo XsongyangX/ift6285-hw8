@@ -95,20 +95,20 @@ def main():
     # pickle.dump(pcfg, open("grammar.pcfg", 'wb'))
 
     # load grammar
-    pcfg : PCFG = pickle.load(open("grammar.pcfg", 'rb'))
+    # pcfg : PCFG = pickle.load(open("grammar.pcfg", 'rb'))
 
     # fill in missing words
-    missing_words = get_missing_words(pcfg, test)
-    pcfg_unk = fill_missing_words(pcfg, missing_words)
+    # missing_words = get_missing_words(pcfg, test)
+    # pcfg_unk = fill_missing_words(pcfg, missing_words)
 
-    pickle.dump(pcfg_unk, open("grammar_unk.pcfg", 'wb'))
+    # pickle.dump(pcfg_unk, open("grammar_unk.pcfg", 'wb'))
 
     # load unk grammar
-    # pcfg_unk: PCFG = pickle.load(open("grammar_unk.pcfg", 'rb'))
+    pcfg_unk: PCFG = pickle.load(open("grammar_unk.pcfg", 'rb'))
 
     # use unk grammar on test sentences
-    # parser = ViterbiParser(pcfg_unk)
-    # parse_treebank(parser, test)
+    parser = ViterbiParser(pcfg_unk)
+    parse_treebank(parser, test)
 
 
 if __name__ == "__main__":
