@@ -78,7 +78,7 @@ def fill_missing_words(grammar: PCFG, missing_words: Set[str]):
 def parse_treebank(parser: ViterbiParser, sentences):
     start_time = time.time()
     parser.trace(trace=1)
-    for sentence in treebank.parsed_sents(sentences):
+    for sentence in treebank.parsed_sents(sentences[:3]):
         tokens = sentence.leaves()
         for tree in parser.parse(tokens):
             print(tree)
