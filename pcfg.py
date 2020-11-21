@@ -54,7 +54,7 @@ def get_missing_words(grammar: PCFG, sentences: List[Tree]):
 def fill_missing_words(grammar: PCFG, missing_words: Set[str]):
     # UNK -> word1 | word2 | ... | wordN
     unknown = Nonterminal('UNK')
-    unk_rules = [ProbabilisticProduction(unknown, [missing_word], prob=1.0/len(missing_words)) for missing_word in missing_words]
+    unk_rules = [Production(unknown, [missing_word]) for missing_word in missing_words]
     
     # Add UNK as a possibility to all rules with strings in the right hand side
     corrected_rules : List[Nonterminal] = []
@@ -67,24 +67,12 @@ def fill_missing_words(grammar: PCFG, missing_words: Set[str]):
             # rule has already been corrected
             if rule.lhs() in corrected_rules:
                 continue
-            
-            rules_to_rebalance = grammar.productions(lhs=rule.lhs())
 
-            unk_rules.append(ProbabilisticProduction(\
-                rule.lhs(), [unknown], prob= 1.0 / (len(rules_to_rebalance) + 1)))
-            
-            # rebalance probabilities
-            rule_to_rebalance : ProbabilisticProduction
-            for rule_to_rebalance in rules_to_rebalance:
-                unk_rules.append(ProbabilisticProduction(\
-                    rule_to_rebalance.lhs(),
-                    rule_to_rebalance.rhs(),
-                    prob=rule_to_rebalance.prob() / (len(rules_to_rebalance) + 1)
-                    ))
+            unk_rules.append(Production(rule.lhs(), [unknown]))
 
             corrected_rules.append(rule.lhs())
 
-    return PCFG(Nonterminal('S'), unk_rules)
+    return induce_pcfg(grammar.start(), grammar.productions() + unk_rules)
 
 
 def parse_treebank(parser: ViterbiParser, sentences):
