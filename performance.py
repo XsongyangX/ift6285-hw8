@@ -50,7 +50,7 @@ for predicted, truth in zip(get_predictions(), test_pos):
     # sentence stats
     print("Sentence length: {}".format(len(predicted)))
     print("Unknown count: {}".format(len([_ for _, pos in predicted if pos == 'UNK'])))
-    print("--Sentence accuracy: {}".format(this_sentence_correct/this_sentence_total if total != 0 else 0))
+    print("--Sentence accuracy: {}".format(this_sentence_correct/this_sentence_total if this_sentence_total != 0 else 0))
 
     correct += this_sentence_correct
     total += this_sentence_total
